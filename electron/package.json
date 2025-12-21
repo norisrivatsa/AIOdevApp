@@ -1,0 +1,45 @@
+{
+  "name": "time-tracker-electron",
+  "version": "1.0.0",
+  "description": "Time Tracker Desktop App",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build:linux": "electron-builder --linux",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac"
+  },
+  "author": "Time Tracker Team",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.4.2",
+    "electron-builder": "^25.1.9"
+  },
+  "build": {
+    "appId": "com.timetracker.app",
+    "productName": "Time Tracker",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "../frontend/dist/**/*",
+      "../backend/**/*",
+      "!../backend/venv/**/*",
+      "!../**/*.pyc",
+      "!../**/__pycache__"
+    ],
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Utility"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    }
+  }
+}

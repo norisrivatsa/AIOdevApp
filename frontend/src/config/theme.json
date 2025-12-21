@@ -1,0 +1,67 @@
+{
+  "accent": {
+    "primary": "#ef4444",
+    "secondary": "#f59e0b",
+    "description": "Primary and secondary colors for the accent gradient. Used in buttons, shadows, and hover effects."
+  },
+  "gradients": {
+    "main": "linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)",
+    "hover": "linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)",
+    "description": "Gradient definitions using the accent colors above"
+  },
+  "shadows": {
+    "card": {
+      "default": "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+      "hover": "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+      "hoverAccent": true,
+      "hoverOpacity": 0.2,
+      "description": "Card shadows. hoverAccent=true adds accent gradient glow on hover"
+    },
+    "button": {
+      "default": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+      "hover": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+      "description": "Button shadows"
+    }
+  },
+  "effects": {
+    "borderGlow": {
+      "enabled": true,
+      "opacity": 0.3,
+      "description": "Add gradient border glow on hover"
+    }
+  },
+  "examples": {
+    "presets": [
+      {
+        "name": "Indigo Purple (Default)",
+        "primary": "#6366f1",
+        "secondary": "#8b5cf6"
+      },
+      {
+        "name": "Blue Cyan",
+        "primary": "#3b82f6",
+        "secondary": "#06b6d4"
+      },
+      {
+        "name": "Pink Rose",
+        "primary": "#ec4899",
+        "secondary": "#f43f5e"
+      },
+      {
+        "name": "Orange Red",
+        "primary": "#f59e0b",
+        "secondary": "#ef4444"
+      },
+      {
+        "name": "Green Emerald",
+        "primary": "#10b981",
+        "secondary": "#059669"
+      },
+      {
+        "name": "Purple Fuchsia",
+        "primary": "#a855f7",
+        "secondary": "#d946ef"
+      }
+    ]
+  }
+}
