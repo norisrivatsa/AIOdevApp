@@ -53,10 +53,19 @@ async def create_indexes():
     """Create database indexes for better performance."""
     logger.info("Creating database indexes...")
 
-    # Courses indexes
+    # Courses indexes (kept for backward compatibility during migration)
     await db.db.courses.create_index("createdAt")
     await db.db.courses.create_index("status")
     await db.db.courses.create_index([("tags", 1)])
+
+    # Subjects indexes
+    await db.db.subjects.create_index("createdAt")
+    await db.db.subjects.create_index("status")
+    await db.db.subjects.create_index([("tags", 1)])
+
+    # Practices indexes
+    await db.db.practices.create_index("createdAt")
+    await db.db.practices.create_index("platform")
 
     # Projects indexes
     await db.db.projects.create_index("createdAt")

@@ -40,7 +40,7 @@ async def initialize_default_boards(db: AsyncIOMotorDatabase):
                 "updatedAt": datetime.utcnow()
             },
             {
-                "name": "Courses",
+                "name": "Analytics",
                 "order": 2,
                 "isDefault": True,
                 "layout": {"cards": []},
@@ -48,7 +48,7 @@ async def initialize_default_boards(db: AsyncIOMotorDatabase):
                 "updatedAt": datetime.utcnow()
             },
             {
-                "name": "Projects",
+                "name": "Creation",
                 "order": 3,
                 "isDefault": True,
                 "layout": {"cards": []},

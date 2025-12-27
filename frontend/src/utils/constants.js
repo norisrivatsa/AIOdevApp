@@ -1,24 +1,94 @@
-// Course statuses
-export const COURSE_STATUS = {
+// Subject statuses (formerly Course)
+export const SUBJECT_STATUS = {
   NOT_STARTED: 'not_started',
   IN_PROGRESS: 'in_progress',
   COMPLETED: 'completed',
   ON_HOLD: 'on_hold',
+  REVIEWING: 'reviewing',
 };
 
-export const COURSE_STATUS_LABELS = {
-  [COURSE_STATUS.NOT_STARTED]: 'Not Started',
-  [COURSE_STATUS.IN_PROGRESS]: 'In Progress',
-  [COURSE_STATUS.COMPLETED]: 'Completed',
-  [COURSE_STATUS.ON_HOLD]: 'On Hold',
+export const SUBJECT_STATUS_LABELS = {
+  [SUBJECT_STATUS.NOT_STARTED]: 'Not Started',
+  [SUBJECT_STATUS.IN_PROGRESS]: 'In Progress',
+  [SUBJECT_STATUS.COMPLETED]: 'Completed',
+  [SUBJECT_STATUS.ON_HOLD]: 'On Hold',
+  [SUBJECT_STATUS.REVIEWING]: 'Reviewing',
 };
 
-export const COURSE_STATUS_COLORS = {
-  [COURSE_STATUS.NOT_STARTED]: 'bg-gray-500',
-  [COURSE_STATUS.IN_PROGRESS]: 'bg-blue-500',
-  [COURSE_STATUS.COMPLETED]: 'bg-green-500',
-  [COURSE_STATUS.ON_HOLD]: 'bg-yellow-500',
+export const SUBJECT_STATUS_COLORS = {
+  [SUBJECT_STATUS.NOT_STARTED]: 'bg-gray-500',
+  [SUBJECT_STATUS.IN_PROGRESS]: 'bg-blue-500',
+  [SUBJECT_STATUS.COMPLETED]: 'bg-green-500',
+  [SUBJECT_STATUS.ON_HOLD]: 'bg-yellow-500',
+  [SUBJECT_STATUS.REVIEWING]: 'bg-purple-500',
 };
+
+// Subject priority
+export const SUBJECT_PRIORITY = {
+  HIGH: 'high',
+  MEDIUM: 'medium',
+  LOW: 'low',
+};
+
+export const SUBJECT_PRIORITY_LABELS = {
+  [SUBJECT_PRIORITY.HIGH]: 'High',
+  [SUBJECT_PRIORITY.MEDIUM]: 'Medium',
+  [SUBJECT_PRIORITY.LOW]: 'Low',
+};
+
+export const SUBJECT_PRIORITY_COLORS = {
+  [SUBJECT_PRIORITY.HIGH]: 'border-red-500 text-red-700 dark:text-red-400',
+  [SUBJECT_PRIORITY.MEDIUM]: 'border-yellow-500 text-yellow-700 dark:text-yellow-400',
+  [SUBJECT_PRIORITY.LOW]: 'border-green-500 text-green-700 dark:text-green-400',
+};
+
+// Subject difficulty levels
+export const SUBJECT_DIFFICULTY = {
+  BEGINNER: 'beginner',
+  INTERMEDIATE: 'intermediate',
+  ADVANCED: 'advanced',
+  EXPERT: 'expert',
+};
+
+export const SUBJECT_DIFFICULTY_LABELS = {
+  [SUBJECT_DIFFICULTY.BEGINNER]: 'Beginner',
+  [SUBJECT_DIFFICULTY.INTERMEDIATE]: 'Intermediate',
+  [SUBJECT_DIFFICULTY.ADVANCED]: 'Advanced',
+  [SUBJECT_DIFFICULTY.EXPERT]: 'Expert',
+};
+
+export const SUBJECT_DIFFICULTY_COLORS = {
+  [SUBJECT_DIFFICULTY.BEGINNER]: 'bg-green-500',
+  [SUBJECT_DIFFICULTY.INTERMEDIATE]: 'bg-yellow-500',
+  [SUBJECT_DIFFICULTY.ADVANCED]: 'bg-orange-500',
+  [SUBJECT_DIFFICULTY.EXPERT]: 'bg-red-500',
+};
+
+// Resource types
+export const RESOURCE_TYPE = {
+  DOCUMENTATION: 'documentation',
+  GITHUB: 'github',
+  ARTICLE: 'article',
+  VIDEO: 'video',
+  BOOK: 'book',
+  NOTES: 'notes',
+  OTHER: 'other',
+};
+
+export const RESOURCE_TYPE_LABELS = {
+  [RESOURCE_TYPE.DOCUMENTATION]: 'Documentation',
+  [RESOURCE_TYPE.GITHUB]: 'GitHub',
+  [RESOURCE_TYPE.ARTICLE]: 'Article',
+  [RESOURCE_TYPE.VIDEO]: 'Video',
+  [RESOURCE_TYPE.BOOK]: 'Book',
+  [RESOURCE_TYPE.NOTES]: 'Notes',
+  [RESOURCE_TYPE.OTHER]: 'Other',
+};
+
+// Backward compatibility
+export const COURSE_STATUS = SUBJECT_STATUS;
+export const COURSE_STATUS_LABELS = SUBJECT_STATUS_LABELS;
+export const COURSE_STATUS_COLORS = SUBJECT_STATUS_COLORS;
 
 // Project statuses
 export const PROJECT_STATUS = {
@@ -42,15 +112,52 @@ export const PROJECT_STATUS_COLORS = {
   [PROJECT_STATUS.ARCHIVED]: 'bg-gray-500',
 };
 
+// Practice platforms
+export const PRACTICE_PLATFORM = {
+  LEETCODE: 'leetcode',
+  CODEFORCES: 'codeforces',
+  HACKERRANK: 'hackerrank',
+  CODEWARS: 'codewars',
+  OTHER: 'other',
+};
+
+export const PRACTICE_PLATFORM_LABELS = {
+  [PRACTICE_PLATFORM.LEETCODE]: 'LeetCode',
+  [PRACTICE_PLATFORM.CODEFORCES]: 'Codeforces',
+  [PRACTICE_PLATFORM.HACKERRANK]: 'HackerRank',
+  [PRACTICE_PLATFORM.CODEWARS]: 'Codewars',
+  [PRACTICE_PLATFORM.OTHER]: 'Other',
+};
+
+export const DIFFICULTY_LEVEL = {
+  EASY: 'easy',
+  MEDIUM: 'medium',
+  HARD: 'hard',
+};
+
+export const DIFFICULTY_LEVEL_LABELS = {
+  [DIFFICULTY_LEVEL.EASY]: 'Easy',
+  [DIFFICULTY_LEVEL.MEDIUM]: 'Medium',
+  [DIFFICULTY_LEVEL.HARD]: 'Hard',
+};
+
+export const DIFFICULTY_LEVEL_COLORS = {
+  [DIFFICULTY_LEVEL.EASY]: 'bg-green-500',
+  [DIFFICULTY_LEVEL.MEDIUM]: 'bg-yellow-500',
+  [DIFFICULTY_LEVEL.HARD]: 'bg-red-500',
+};
+
 // Session types
 export const SESSION_TYPE = {
-  COURSE: 'course',
+  SUBJECT: 'subject',
   PROJECT: 'project',
+  PRACTICE: 'practice',
 };
 
 export const SESSION_TYPE_LABELS = {
-  [SESSION_TYPE.COURSE]: 'Course',
+  [SESSION_TYPE.SUBJECT]: 'Subject',
   [SESSION_TYPE.PROJECT]: 'Project',
+  [SESSION_TYPE.PRACTICE]: 'Practice',
 };
 
 // Theme options
@@ -63,8 +170,8 @@ export const THEME = {
 export const DEFAULT_BOARDS = [
   { name: 'Dashboard', key: 'dashboard' },
   { name: 'Calendar', key: 'calendar' },
-  { name: 'Courses', key: 'courses' },
-  { name: 'Projects', key: 'projects' },
+  { name: 'Analytics', key: 'analytics' },
+  { name: 'Projects & Subjects', key: 'creation' },
   { name: 'Focus', key: 'focus' },
 ];
 

@@ -63,6 +63,58 @@ export const coursesApi = {
 };
 
 // ============================================
+// SUBJECTS API
+// ============================================
+export const subjectsApi = {
+  getAll: (status) =>
+    apiClient.get('/subjects', { params: status ? { status } : {} }),
+
+  getById: (id) =>
+    apiClient.get(`/subjects/${id}`),
+
+  create: (data) =>
+    apiClient.post('/subjects', data),
+
+  update: (id, data) =>
+    apiClient.put(`/subjects/${id}`, data),
+
+  delete: (id) =>
+    apiClient.delete(`/subjects/${id}`),
+
+  addSubtopic: (subjectId, data) =>
+    apiClient.post(`/subjects/${subjectId}/subtopics`, data),
+
+  updateSubtopic: (subjectId, subtopicId, data) =>
+    apiClient.put(`/subjects/${subjectId}/subtopics/${subtopicId}`, data),
+
+  deleteSubtopic: (subjectId, subtopicId) =>
+    apiClient.delete(`/subjects/${subjectId}/subtopics/${subtopicId}`),
+};
+
+// ============================================
+// PRACTICES API
+// ============================================
+export const practicesApi = {
+  getAll: () =>
+    apiClient.get('/practices'),
+
+  getById: (id) =>
+    apiClient.get(`/practices/${id}`),
+
+  create: (data) =>
+    apiClient.post('/practices', data),
+
+  update: (id, data) =>
+    apiClient.put(`/practices/${id}`, data),
+
+  delete: (id) =>
+    apiClient.delete(`/practices/${id}`),
+
+  updateStats: (id, data) =>
+    apiClient.put(`/practices/${id}/stats`, data),
+};
+
+// ============================================
 // PROJECTS API
 // ============================================
 export const projectsApi = {
@@ -77,6 +129,9 @@ export const projectsApi = {
 
   update: (id, data) =>
     apiClient.put(`/projects/${id}`, data),
+
+  partialUpdate: (id, updates) =>
+    apiClient.patch(`/projects/${id}`, updates),
 
   delete: (id) =>
     apiClient.delete(`/projects/${id}`),

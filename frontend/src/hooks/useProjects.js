@@ -34,7 +34,9 @@ export const useCreateProject = () => {
       toast.success('Project created successfully!');
     },
     onError: (error) => {
-      toast.error(error.response?.data?.detail || 'Failed to create project');
+      console.error('Project creation error:', error.response?.data);
+      const errorMsg = error.response?.data?.detail || 'Failed to create project';
+      toast.error(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
     },
   });
 };
@@ -48,6 +50,22 @@ export const useUpdateProject = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.byId(variables.id) });
       toast.success('Project updated successfully!');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.detail || 'Failed to update project');
+    },
+  });
+};
+
+export const usePartialUpdateProject = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, updates }) => projectsApi.partialUpdate(id, updates),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.byId(variables.id) });
+      toast.success('Project updated!');
     },
     onError: (error) => {
       toast.error(error.response?.data?.detail || 'Failed to update project');

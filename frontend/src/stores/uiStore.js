@@ -26,6 +26,10 @@ const useUIStore = create(
       selectedProjectId: null,
       selectedSessionId: null,
 
+      // Viewing project/subject pages
+      viewingProjectId: null,
+      viewingSubjectId: null,
+
       // Actions
       setCurrentBoardIndex: (index) => set({ currentBoardIndex: index }),
 
@@ -84,6 +88,12 @@ const useUIStore = create(
       // Sidebar
       toggleSidebar: () =>
         set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
+
+      // Project/Subject page viewing
+      openProjectPage: (projectId) => set({ viewingProjectId: projectId }),
+      closeProjectPage: () => set({ viewingProjectId: null }),
+      openSubjectPage: (subjectId) => set({ viewingSubjectId: subjectId }),
+      closeSubjectPage: () => set({ viewingSubjectId: null }),
     }),
     {
       name: 'ui-storage',

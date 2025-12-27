@@ -62,7 +62,7 @@ async def get_time_distribution(
     days: int = Query(30, ge=1, le=365),
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
-    """Get time distribution by type (course vs project) over specified days."""
+    """Get time distribution by type (subject vs project vs practice) over specified days."""
     start_date = datetime.utcnow() - timedelta(days=days)
 
     pipeline = [
@@ -77,12 +77,16 @@ async def get_time_distribution(
     results = await db.sessions.aggregate(pipeline).to_list(10)
 
     distribution = {
-        "course": {"duration": 0, "hours": 0.0, "count": 0},
-        "project": {"duration": 0, "hours": 0.0, "count": 0}
+        "subject": {"duration": 0, "hours": 0.0, "count": 0},
+        "project": {"duration": 0, "hours": 0.0, "count": 0},
+        "practice": {"duration": 0, "hours": 0.0, "count": 0}
     }
 
     for item in results:
         session_type = item["_id"]
+        # Backward compatibility: treat "course" as "subject"
+        if session_type == "course":
+            session_type = "subject"
         if session_type in distribution:
             distribution[session_type] = {
                 "duration": item["totalDuration"],
@@ -168,8 +172,8 @@ async def calculate_streaks(db: AsyncIOMotorDatabase = Depends(get_database)):
 @router.get("/progress")
 async def get_overall_progress(db: AsyncIOMotorDatabase = Depends(get_database)):
     """Get overall progress metrics."""
-    # Count courses by status
-    course_pipeline = [
+    # Count subjects by status
+    subject_pipeline = [
         {"$group": {
             "_id": "$status",
             "count": {"$sum": 1}
@@ -192,7 +196,7 @@ async def get_overall_progress(db: AsyncIOMotorDatabase = Depends(get_database))
         }}
     ]
 
-    courses = await db.courses.aggregate(course_pipeline).to_list(10)
+    subjects = await db.subjects.aggregate(subject_pipeline).to_list(10)
     projects = await db.projects.aggregate(project_pipeline).to_list(10)
     time_result = await db.sessions.aggregate(time_pipeline).to_list(1)
 
@@ -208,18 +212,18 @@ async def get_overall_progress(db: AsyncIOMotorDatabase = Depends(get_database))
         {"$count": "total"}
     ]
 
-    completed_subtopics = await db.courses.aggregate(completed_subtopics_pipeline).to_list(1)
-    total_subtopics = await db.courses.aggregate(total_subtopics_pipeline).to_list(1)
+    completed_subtopics = await db.subjects.aggregate(completed_subtopics_pipeline).to_list(1)
+    total_subtopics = await db.subjects.aggregate(total_subtopics_pipeline).to_list(1)
 
-    # Format course stats
-    course_stats = {
+    # Format subject stats
+    subject_stats = {
         "not_started": 0,
         "in_progress": 0,
         "completed": 0,
         "on_hold": 0
     }
-    for item in courses:
-        course_stats[item["_id"]] = item["count"]
+    for item in subjects:
+        subject_stats[item["_id"]] = item["count"]
 
     # Format project stats
     project_stats = {
@@ -232,8 +236,8 @@ async def get_overall_progress(db: AsyncIOMotorDatabase = Depends(get_database))
         project_stats[item["_id"]] = item["count"]
 
     return {
-        "courses": course_stats,
-        "projects": project_stats,
+        "subjectsByStatus": subject_stats,
+        "projectsByStatus": project_stats,
         "totalTimeLogged": time_result[0]["totalDuration"] if time_result else 0,
         "totalHoursLogged": round((time_result[0]["totalDuration"] if time_result else 0) / 3600, 2),
         "completedSubtopics": completed_subtopics[0]["total"] if completed_subtopics else 0,

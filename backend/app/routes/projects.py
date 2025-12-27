@@ -3,7 +3,7 @@ from typing import List
 from datetime import datetime
 from bson import ObjectId
 
-from app.models.project import Project
+from app.models.project import Project, ProjectCreate, ProjectUpdate
 from app.core.database import get_database
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
@@ -34,11 +34,11 @@ async def list_projects(
 
 @router.post("/", response_model=Project, status_code=status.HTTP_201_CREATED)
 async def create_project(
-    project: Project,
+    project: ProjectCreate,
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
     """Create a new project."""
-    project_dict = project.model_dump(exclude={"id"})
+    project_dict = project.model_dump()
     project_dict["createdAt"] = datetime.utcnow()
     project_dict["updatedAt"] = datetime.utcnow()
 
@@ -68,7 +68,7 @@ async def get_project(
 @router.put("/{project_id}", response_model=Project)
 async def update_project(
     project_id: str,
-    project_update: Project,
+    project_update: ProjectUpdate,
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
     """Update an existing project."""
@@ -82,13 +82,43 @@ async def update_project(
     if not existing_project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    # Update project
-    update_dict = project_update.model_dump(exclude={"id", "createdAt"})
+    # Update project - only update fields that are provided (not None)
+    update_dict = project_update.model_dump(exclude_unset=True)
     update_dict["updatedAt"] = datetime.utcnow()
 
     await db.projects.update_one(
         {"_id": oid},
         {"$set": update_dict}
+    )
+
+    updated_project = await db.projects.find_one({"_id": oid})
+    return serialize_project(updated_project)
+
+
+@router.patch("/{project_id}", response_model=Project)
+async def partial_update_project(
+    project_id: str,
+    updates: dict,
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """Partially update specific fields of a project."""
+    try:
+        oid = ObjectId(project_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid project ID format")
+
+    # Check if project exists
+    existing_project = await db.projects.find_one({"_id": oid})
+    if not existing_project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Add updatedAt timestamp
+    updates["updatedAt"] = datetime.utcnow()
+
+    # Update only the provided fields
+    await db.projects.update_one(
+        {"_id": oid},
+        {"$set": updates}
     )
 
     updated_project = await db.projects.find_one({"_id": oid})

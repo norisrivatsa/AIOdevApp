@@ -1,17 +1,90 @@
-from app.models.course import Course, CourseStatus, Subtopic, Resource
-from app.models.project import Project, ProjectStatus, GitHubData
+from app.models.course import Course, CourseStatus
+from app.models.subject import (
+    Subject,
+    SubjectStatus,
+    SubjectCreate,
+    SubjectUpdate,
+    Priority,
+    DifficultyLevel,
+    ResourceType,
+    Subtopic,
+    KnowledgeBaseLink,
+    ResourceLink,
+    IconSettings,
+    CostInfo,
+)
+from app.models.practice import Practice, PracticePlatform, PracticeDifficulty
+from app.models.project import (
+    Project,
+    ProjectStatus,
+    ProjectPriority,
+    ProjectCreate,
+    ProjectUpdate,
+    GitHubData,
+    DeploymentStatus,
+    EstimatedTime,
+    Blocker,
+    SuccessCriterion,
+    QuickLink,
+    ProjectIcon,
+    GitHubSyncSettings,
+)
 from app.models.session import Session, SessionType
 from app.models.board import Board, BoardLayout, Card, CardPosition, CardSize
 from app.models.settings import UserSettings, Theme
+from app.models.vision_card import (
+    VisionCard,
+    VisionCardCreate,
+    VisionCardUpdate,
+    CardType,
+    CardSize as VisionCardSize,
+    CardPosition as VisionCardPosition,
+)
+from app.models.vision_goal import (
+    VisionGoal,
+    VisionGoalCreate,
+    VisionGoalUpdate,
+    GoalStatus,
+    GoalPriority,
+    Milestone,
+)
+from app.models.vision_quote import (
+    VisionQuote,
+    VisionQuoteCreate,
+    VisionQuoteUpdate,
+)
 
 __all__ = [
     "Course",
     "CourseStatus",
+    "Subject",
+    "SubjectStatus",
+    "SubjectCreate",
+    "SubjectUpdate",
+    "Priority",
+    "DifficultyLevel",
+    "ResourceType",
     "Subtopic",
-    "Resource",
+    "KnowledgeBaseLink",
+    "ResourceLink",
+    "IconSettings",
+    "CostInfo",
+    "Practice",
+    "PracticePlatform",
+    "PracticeDifficulty",
     "Project",
     "ProjectStatus",
+    "ProjectPriority",
+    "ProjectCreate",
+    "ProjectUpdate",
     "GitHubData",
+    "DeploymentStatus",
+    "EstimatedTime",
+    "Blocker",
+    "SuccessCriterion",
+    "QuickLink",
+    "ProjectIcon",
+    "GitHubSyncSettings",
     "Session",
     "SessionType",
     "Board",
@@ -21,4 +94,19 @@ __all__ = [
     "CardSize",
     "UserSettings",
     "Theme",
+    "VisionCard",
+    "VisionCardCreate",
+    "VisionCardUpdate",
+    "CardType",
+    "VisionCardSize",
+    "VisionCardPosition",
+    "VisionGoal",
+    "VisionGoalCreate",
+    "VisionGoalUpdate",
+    "GoalStatus",
+    "GoalPriority",
+    "Milestone",
+    "VisionQuote",
+    "VisionQuoteCreate",
+    "VisionQuoteUpdate",
 ]

@@ -5,14 +5,15 @@ from enum import Enum
 
 
 class SessionType(str, Enum):
-    COURSE = "course"
+    SUBJECT = "subject"
     PROJECT = "project"
+    PRACTICE = "practice"
 
 
 class Session(BaseModel):
     id: Optional[str] = None
     type: SessionType
-    referenceId: str  # ID of course or project
+    referenceId: str  # ID of subject, project, or practice
     startTime: datetime
     endTime: Optional[datetime] = None
     duration: int = 0  # seconds
@@ -24,8 +25,8 @@ class Session(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "type": "course",
-                "referenceId": "course-123",
+                "type": "subject",
+                "referenceId": "subject-123",
                 "startTime": "2025-01-15T09:00:00",
                 "endTime": "2025-01-15T11:00:00",
                 "duration": 7200,

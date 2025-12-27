@@ -11,12 +11,13 @@ import BoardContainer from './components/layout/BoardContainer';
 import TopBar from './components/layout/TopBar';
 import DashboardBoard from './boards/DashboardBoard';
 import CalendarBoard from './boards/CalendarBoard';
-import CoursesBoard from './boards/CoursesBoard';
-import ProjectsBoard from './boards/ProjectsBoard';
+import AnalyticsBoard from './boards/AnalyticsBoard';
+import CreationBoard from './boards/CreationBoard';
 import FocusBoard from './boards/FocusBoard';
+import ProjectPage from './pages/ProjectPage';
 
 function App() {
-  const { currentBoardIndex, boards, setBoards } = useUIStore();
+  const { currentBoardIndex, boards, setBoards, viewingProjectId } = useUIStore();
   const { loadActiveSession } = useTimerStore();
 
   // Initialize keyboard shortcuts
@@ -44,12 +45,24 @@ function App() {
   const boardComponents = {
     'Dashboard': <DashboardBoard />,
     'Calendar': <CalendarBoard />,
-    'Courses': <CoursesBoard />,
-    'Projects': <ProjectsBoard />,
+    'Analytics': <AnalyticsBoard />,
+    'Projects & Subjects': <CreationBoard />,
     'Focus': <FocusBoard />,
   };
 
   const currentBoard = boards[currentBoardIndex];
+
+  // If viewing a specific project page, render that instead of boards
+  if (viewingProjectId) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <div className="min-h-screen bg-gray-50 dark:bg-black">
+          <ProjectPage projectId={viewingProjectId} />
+        </div>
+        <Toaster position="top-right" />
+      </QueryClientProvider>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
