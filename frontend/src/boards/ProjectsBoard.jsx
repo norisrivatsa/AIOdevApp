@@ -28,7 +28,7 @@ const ProjectsBoard = () => {
   const deleteProject = useDeleteProject();
   const syncGithub = useSyncGithub();
 
-  const { isProjectModalOpen, openProjectModal, closeProjectModal, selectedProjectId } =
+  const { isProjectModalOpen, openProjectModal, closeProjectModal, selectedProjectId, openProjectPage } =
     useUIStore();
 
   const [formData, setFormData] = useState({
@@ -158,7 +158,7 @@ const ProjectsBoard = () => {
           // Projects Grid
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project) => (
-              <Card key={project.id} className="flex flex-col">
+              <Card key={project.id} className="flex flex-col cursor-pointer" onClick={() => openProjectPage(project.id)}>
                 <Card.Header className="flex-none">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
@@ -175,14 +175,24 @@ const ProjectsBoard = () => {
                     </div>
                     <div className="flex gap-2 ml-2">
                       <button
-                        onClick={() => handleEdit(project)}
+                        onClick={(e) => { e.stopPropagation(); handleEdit(project); }}
                         className="text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                         title="Edit project"
                       >
                         <Pencil size={18} />
                       </button>
+                      {(project.githubRepoUrl || project.repository_url) && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); syncGithub.mutate(project.id); }}
+                          disabled={syncGithub.isPending}
+                          className="text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors disabled:opacity-50"
+                          title="Sync GitHub data"
+                        >
+                          <Github size={18} className={syncGithub.isPending ? 'animate-spin' : ''} />
+                        </button>
+                      )}
                       <button
-                        onClick={() => handleDelete(project.id)}
+                        onClick={(e) => { e.stopPropagation(); handleDelete(project.id); }}
                         className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                         title="Delete project"
                       >
@@ -203,6 +213,7 @@ const ProjectsBoard = () => {
                         href={project.repository_url}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
                         className="text-sm text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
                       >
                         <Github size={16} />
@@ -242,7 +253,7 @@ const ProjectsBoard = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleSync(project.id)}
+                      onClick={(e) => { e.stopPropagation(); handleSync(project.id); }}
                       loading={syncGithub.isPending}
                       className="w-full gap-2"
                     >
@@ -265,7 +276,7 @@ const ProjectsBoard = () => {
         title={selectedProjectId ? 'Edit Project' : 'Create New Project'}
         size="md"
         footer={
-          <>
+          <div className="flex items-center justify-between w-full">
             <Button variant="ghost" onClick={closeProjectModal}>
               Cancel
             </Button>
@@ -275,7 +286,7 @@ const ProjectsBoard = () => {
             >
               {selectedProjectId ? 'Update Project' : 'Create Project'}
             </Button>
-          </>
+          </div>
         }
       >
         <form onSubmit={handleSubmit} className="space-y-4">

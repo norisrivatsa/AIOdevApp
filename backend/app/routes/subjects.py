@@ -2,12 +2,18 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from typing import List
 from datetime import datetime
 from bson import ObjectId
+import secrets
 
 from app.models.subject import Subject, Subtopic
 from app.core.database import get_database
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 router = APIRouter()
+
+
+def generate_subject_id() -> str:
+    """Generate a unique subject ID"""
+    return f"subj_{secrets.token_urlsafe(8)}"
 
 
 def serialize_subject(subject_doc: dict) -> dict:
@@ -39,6 +45,7 @@ async def create_subject(
 ):
     """Create a new subject."""
     subject_dict = subject.model_dump(exclude={"id"})
+    subject_dict["subjectId"] = generate_subject_id()  # Generate custom ID
     subject_dict["createdAt"] = datetime.utcnow()
     subject_dict["updatedAt"] = datetime.utcnow()
 

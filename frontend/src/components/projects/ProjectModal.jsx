@@ -18,6 +18,7 @@ import ColorPicker from '../ui/ColorPicker';
 import TagInput from '../ui/TagInput';
 import CollapsibleSection from '../ui/CollapsibleSection';
 import notify from '../../utils/notifications';
+import { useSyncGithub } from '../../hooks/useProjects';
 
 const TECH_STACK_PRESETS = [
   'React', 'Vue', 'Angular', 'Svelte', 'Next.js', 'Nuxt.js',
@@ -105,6 +106,9 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, initialData = null, projects 
   const [isDirty, setIsDirty] = useState(false);
   const [isGithubFetching, setIsGithubFetching] = useState(false);
   const [githubFetchError, setGithubFetchError] = useState('');
+
+  // GitHub sync mutation
+  const syncGithub = useSyncGithub();
 
   // Load initial data if editing
   useEffect(() => {
@@ -264,37 +268,24 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, initialData = null, projects 
   const handleFetchGithub = async () => {
     if (!formData.githubRepoUrl) return;
 
-    setIsGithubFetching(true);
-    setGithubFetchError('');
+    // If editing an existing project, sync its GitHub data
+    if (initialData?.id) {
+      setIsGithubFetching(true);
+      setGithubFetchError('');
 
-    try {
-      // TODO: Replace with actual API call
-      // const response = await fetch(`/api/projects/fetch-github`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ repoUrl: formData.githubRepoUrl }),
-      // });
-      // const data = await response.json();
-
-      // Mock data for now
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Auto-populate fields
-      // setFormData(prev => ({
-      //   ...prev,
-      //   name: prev.name || data.name,
-      //   description: prev.description || data.description,
-      //   techStack: [...new Set([...prev.techStack, ...data.languages])],
-      //   readme: prev.readme || data.readme,
-      //   defaultBranch: data.defaultBranch,
-      // }));
-
-      notify.success('GitHub data imported successfully (feature coming soon)');
-    } catch (error) {
-      setGithubFetchError('Failed to fetch GitHub data. Please check the URL and try again.');
-      notify.error('Failed to fetch GitHub data. Please check the URL and try again.');
-    } finally {
-      setIsGithubFetching(false);
+      try {
+        await syncGithub.mutateAsync(initialData.id);
+        notify.success('GitHub data synced successfully!');
+      } catch (error) {
+        const errorMsg = error.response?.data?.detail || 'Failed to sync GitHub data';
+        setGithubFetchError(errorMsg);
+        notify.error(errorMsg);
+      } finally {
+        setIsGithubFetching(false);
+      }
+    } else {
+      // For new projects, just show a message that they need to save first
+      notify.info('Please save the project first, then you can sync GitHub data');
     }
   };
 

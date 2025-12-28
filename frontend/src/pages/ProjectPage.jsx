@@ -1,14 +1,17 @@
 import { useEffect, useState, useMemo } from 'react';
-import { ArrowLeft, Edit2, Settings, Moon, Sun, Edit, ChevronLeft, ChevronRight, Eye, X, Plus } from 'lucide-react';
-import { useProjects, usePartialUpdateProject } from '../hooks/useProjects';
+import { ArrowLeft, Edit2, Settings, Moon, Sun, Edit, ChevronLeft, ChevronRight, Eye, X, Plus, Github } from 'lucide-react';
+import { useProjects, usePartialUpdateProject, useSyncGithub } from '../hooks/useProjects';
 import { useSessions } from '../hooks/useSessions';
 import useUIStore from '../stores/uiStore';
 import useSettingsStore from '../stores/settingsStore';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import Card from '../components/ui/Card';
+import Modal from '../components/ui/Modal';
+import Input from '../components/ui/Input';
 import EditableGridLayout from '../components/layout/EditableGridLayout';
 import CardEditModal from '../components/projects/CardEditModal';
+import GitHubSection from '../components/projects/GitHubSection';
 
 const ProjectPage = ({ projectId }) => {
   const { data: projects } = useProjects();
@@ -16,6 +19,7 @@ const ProjectPage = ({ projectId }) => {
   const { closeProjectPage, openProjectModal, openSettings, isEditMode, toggleEditMode } = useUIStore();
   const { theme, toggleTheme } = useSettingsStore();
   const { mutate: partialUpdateProject } = usePartialUpdateProject();
+  const syncGithub = useSyncGithub();
   const [project, setProject] = useState(null);
   const [editingCard, setEditingCard] = useState(null);
   const [isCardEditModalOpen, setIsCardEditModalOpen] = useState(false);
@@ -26,6 +30,10 @@ const ProjectPage = ({ projectId }) => {
   // Documentation page navigation
   const [docCurrentPage, setDocCurrentPage] = useState(0); // 0 = README, 1+ = notes
   const [isFullScreenEditorOpen, setIsFullScreenEditorOpen] = useState(false);
+
+  // Project Settings Modal
+  const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false);
+  const [githubTokenInput, setGithubTokenInput] = useState('');
   const [isFullScreenViewOpen, setIsFullScreenViewOpen] = useState(false);
   const [fullScreenContent, setFullScreenContent] = useState({ title: '', content: '', field: '' });
   const [isCreateNoteModalOpen, setIsCreateNoteModalOpen] = useState(false);
@@ -429,59 +437,13 @@ const ProjectPage = ({ projectId }) => {
       </Card.Body>
     </Card>,
 
-    // GitHub Kanban Card
-    <Card key="github-kanban" className="dark:!bg-black shadow-lg">
-      <Card.Header>
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            GitHub Issues
-          </h3>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => handleCardEdit('github-kanban')}
-            title="Edit card content"
-          >
-            <Edit size={14} />
-          </Button>
-        </div>
-      </Card.Header>
-      <Card.Body>
-        {project.githubRepoUrl ? (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between mb-4">
-              <a
-                href={project.githubRepoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 truncate"
-              >
-                {project.githubRepoUrl}
-              </a>
-              <Badge variant="secondary">Coming Soon</Badge>
-            </div>
-
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              <p className="mb-2">GitHub integration coming soon</p>
-              <p className="text-sm">We'll fetch and display issues here</p>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-12 text-gray-500 dark:text-gray-400">
-            <p className="text-lg font-medium mb-2">GitHub repo not linked</p>
-            <p className="text-sm">Add a GitHub repository URL to enable issue tracking</p>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => handleCardEdit('github-kanban')}
-              className="mt-4"
-            >
-              Link Repository
-            </Button>
-          </div>
-        )}
-      </Card.Body>
-    </Card>,
+    // GitHub Section
+    <div key="github-kanban">
+      <GitHubSection
+        githubData={project.githubData}
+        repoUrl={project.githubRepoUrl || project.repository_url}
+      />
+    </div>,
 
     // Tech Stack Card
     <Card key="tech-stack" className="dark:!bg-black shadow-lg">
@@ -1184,6 +1146,27 @@ const ProjectPage = ({ projectId }) => {
           <div className="flex items-center gap-2">
             <Button
               size="sm"
+              variant="secondary"
+              onClick={handleEditProject}
+              title="Edit project details"
+            >
+              <Edit size={16} />
+              Edit
+            </Button>
+            {(project.githubRepoUrl || project.repository_url) && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => syncGithub.mutate(projectId)}
+                disabled={syncGithub.isPending}
+                title="Sync GitHub data"
+              >
+                <Github size={16} className={syncGithub.isPending ? 'animate-spin' : ''} />
+                Sync
+              </Button>
+            )}
+            <Button
+              size="sm"
               variant={isEditMode ? 'primary' : 'secondary'}
               onClick={toggleEditMode}
               title="Toggle grid layout edit mode"
@@ -1202,8 +1185,8 @@ const ProjectPage = ({ projectId }) => {
             <Button
               size="sm"
               variant="secondary"
-              onClick={openSettings}
-              title="Settings"
+              onClick={() => setIsProjectSettingsOpen(true)}
+              title="Project Settings"
             >
               <Settings size={16} />
             </Button>
@@ -1410,6 +1393,111 @@ const ProjectPage = ({ projectId }) => {
           </div>
         </div>
       )}
+
+      {/* Project Settings Modal */}
+      <Modal
+        isOpen={isProjectSettingsOpen}
+        onClose={() => {
+          setIsProjectSettingsOpen(false);
+          setGithubTokenInput('');
+        }}
+        title="Project Settings"
+        size="md"
+      >
+        <div className="space-y-6">
+          {/* GitHub Integration Section */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              GitHub Integration
+            </h3>
+
+            <div className="space-y-4">
+              <div>
+                <label
+                  htmlFor="githubToken"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Personal Access Token
+                </label>
+
+                {project?.githubToken ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-green-800 dark:text-green-300">
+                          Token configured
+                        </p>
+                        <p className="text-xs text-green-600 dark:text-green-400 font-mono mt-1">
+                          {project.githubToken.substring(0, 7)}{'*'.repeat(20)}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          partialUpdateProject({
+                            id: projectId,
+                            updates: { githubToken: '' }
+                          });
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Token is securely stored. You can remove it and add a new one anytime.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <Input
+                      id="githubToken"
+                      type="password"
+                      value={githubTokenInput}
+                      onChange={(e) => setGithubTokenInput(e.target.value)}
+                      placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                    />
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                      <p className="text-xs text-blue-800 dark:text-blue-300 mb-2">
+                        <strong>Why do I need this?</strong>
+                      </p>
+                      <p className="text-xs text-blue-700 dark:text-blue-400 mb-2">
+                        GitHub Personal Access Token is required to sync with Projects V2 (new beta projects). Without it, the app can only access public repository data.
+                      </p>
+                      <p className="text-xs text-blue-700 dark:text-blue-400">
+                        <a
+                          href="https://github.com/settings/tokens/new?scopes=repo,project&description=TimeTracker%20Projects%20Sync"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium underline hover:text-blue-600 dark:hover:text-blue-300"
+                        >
+                          Create a token
+                        </a> with <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">repo</code> and <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">project</code> scopes.
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        if (githubTokenInput.trim()) {
+                          partialUpdateProject({
+                            id: projectId,
+                            updates: { githubToken: githubTokenInput.trim() }
+                          });
+                          setGithubTokenInput('');
+                          setIsProjectSettingsOpen(false);
+                        }
+                      }}
+                      disabled={!githubTokenInput.trim()}
+                      className="w-full"
+                    >
+                      Save Token
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

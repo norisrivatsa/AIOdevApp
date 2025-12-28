@@ -9,7 +9,7 @@ import useKeyboardShortcuts from './hooks/useKeyboardShortcuts';
 import useThemeColors from './hooks/useThemeColors';
 import BoardContainer from './components/layout/BoardContainer';
 import TopBar from './components/layout/TopBar';
-import DashboardBoard from './boards/DashboardBoard';
+import VisionBoard from './boards/VisionBoard';
 import CalendarBoard from './boards/CalendarBoard';
 import AnalyticsBoard from './boards/AnalyticsBoard';
 import CreationBoard from './boards/CreationBoard';
@@ -43,7 +43,7 @@ function App() {
 
   // Board components mapping
   const boardComponents = {
-    'Dashboard': <DashboardBoard />,
+    'Vision Board': <VisionBoard />,
     'Calendar': <CalendarBoard />,
     'Analytics': <AnalyticsBoard />,
     'Projects & Subjects': <CreationBoard />,

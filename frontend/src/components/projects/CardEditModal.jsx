@@ -326,7 +326,7 @@ const CardEditModal = ({ isOpen, onClose, onSave, cardType, initialData, project
   };
 
   const footer = (
-    <div className="flex gap-2 justify-end">
+    <div className="flex items-center justify-between w-full">
       <Button variant="secondary" onClick={onClose}>
         Cancel
       </Button>

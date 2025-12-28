@@ -5,7 +5,7 @@ import logging
 
 from app.core.config import settings
 from app.core.database import connect_to_mongo, close_mongo_connection
-from app.routes import courses, subjects, practices, projects, sessions, boards, settings_router, analytics, ui_customization
+from app.routes import courses, subjects, practices, projects, sessions, boards, settings_router, analytics, ui_customization, visions
 
 # Configure logging
 logging.basicConfig(
@@ -53,6 +53,7 @@ app.include_router(boards.router, prefix=f"{settings.API_V1_PREFIX}/boards", tag
 app.include_router(settings_router.router, prefix=f"{settings.API_V1_PREFIX}/settings", tags=["settings"])
 app.include_router(analytics.router, prefix=f"{settings.API_V1_PREFIX}/analytics", tags=["analytics"])
 app.include_router(ui_customization.router, prefix=f"{settings.API_V1_PREFIX}/ui-customization", tags=["ui-customization"])
+app.include_router(visions.router, prefix=f"{settings.API_V1_PREFIX}/visions", tags=["visions"])
 
 
 @app.get("/")

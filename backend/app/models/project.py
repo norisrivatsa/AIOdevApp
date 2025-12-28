@@ -89,6 +89,7 @@ class GitHubData(BaseModel):
 
 class Project(BaseModel):
     id: Optional[str] = None
+    projectId: Optional[str] = None  # Custom unique ID for linking
 
     # Required fields
     name: str
@@ -115,6 +116,7 @@ class Project(BaseModel):
     # Technical Details
     githubRepoUrl: str = ""
     repositoryUrl: str = ""  # Backward compatibility
+    githubToken: str = ""  # GitHub Personal Access Token for Projects V2 access
     defaultBranch: str = "main"
     currentBranch: str = ""
     techStack: List[str] = []
@@ -181,6 +183,7 @@ class ProjectCreate(BaseModel):
     completionDate: Optional[datetime] = None
     estimatedTime: EstimatedTime = Field(default_factory=EstimatedTime)
     githubRepoUrl: str = ""
+    githubToken: str = ""
     defaultBranch: str = "main"
     currentBranch: str = ""
     techStack: List[str] = []
@@ -221,6 +224,7 @@ class ProjectUpdate(BaseModel):
     completionPercentage: Optional[float] = None
     autoCalculateProgress: Optional[bool] = None
     githubRepoUrl: Optional[str] = None
+    githubToken: Optional[str] = None
     defaultBranch: Optional[str] = None
     currentBranch: Optional[str] = None
     techStack: Optional[List[str]] = None

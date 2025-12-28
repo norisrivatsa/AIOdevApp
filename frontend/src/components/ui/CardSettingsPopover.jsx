@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { MoreVertical, Lock, Unlock } from 'lucide-react';
 
 const CardSettingsPopover = ({
@@ -17,6 +18,8 @@ const CardSettingsPopover = ({
   const [localWidth, setLocalWidth] = useState(width);
   const [localHeight, setLocalHeight] = useState(height);
   const [ratio, setRatio] = useState(propRatio || width / height);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const buttonRef = useRef(null);
   const popoverRef = useRef(null);
 
   // Update local values when props change (from drag-resize)
@@ -28,10 +31,37 @@ const CardSettingsPopover = ({
     }
   }, [width, height, isRatioLocked]);
 
+  // Update popover position when opened
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const popoverWidth = 256; // w-64 = 16rem = 256px
+      const viewportWidth = window.innerWidth;
+
+      // Calculate position
+      let left = rect.right - popoverWidth;
+      const top = rect.bottom + 8; // mt-2 = 8px
+
+      // Adjust if popover would go off-screen
+      if (left < 8) {
+        left = 8;
+      } else if (left + popoverWidth > viewportWidth - 8) {
+        left = viewportWidth - popoverWidth - 8;
+      }
+
+      setPosition({ top, left });
+    }
+  }, [isOpen]);
+
   // Close popover when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (popoverRef.current && !popoverRef.current.contains(event.target)) {
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(event.target) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target)
+      ) {
         setIsOpen(false);
       }
     };
@@ -88,9 +118,10 @@ const CardSettingsPopover = ({
   const heightPx = localHeight * gridRowHeight;
 
   return (
-    <div className="relative" ref={popoverRef}>
+    <>
       {/* Three-dots button */}
       <button
+        ref={buttonRef}
         onClick={(e) => {
           e.stopPropagation();
           setIsOpen(!isOpen);
@@ -101,10 +132,16 @@ const CardSettingsPopover = ({
         <MoreVertical size={16} className="text-gray-600 dark:text-gray-400" />
       </button>
 
-      {/* Popover */}
-      {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 p-4"
-          style={{ zIndex: 999999 }}
+      {/* Popover - rendered via portal */}
+      {isOpen && createPortal(
+        <div
+          ref={popoverRef}
+          className="fixed w-64 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 p-4"
+          style={{
+            zIndex: 999999,
+            top: `${position.top}px`,
+            left: `${position.left}px`,
+          }}
         >
           <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
             Card Dimensions
@@ -199,9 +236,10 @@ const CardSettingsPopover = ({
               Drag from corner to resize, or enter values manually.
             </p>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 };
 

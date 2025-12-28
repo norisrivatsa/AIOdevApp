@@ -24,7 +24,7 @@ async def initialize_default_boards(db: AsyncIOMotorDatabase):
     if count == 0:
         default_boards = [
             {
-                "name": "Dashboard",
+                "name": "Vision Board",
                 "order": 0,
                 "isDefault": True,
                 "layout": {"cards": []},

@@ -466,10 +466,9 @@ const CreationBoard = () => {
                         variant="secondary"
                         onClick={(e) => {
                           e.stopPropagation();
-                          // Open in new tab
-                          window.open(`#/project/${project.id}`, '_blank');
+                          handleOpenProject(project.id);
                         }}
-                        title="Open project in new tab"
+                        title="Open project"
                       >
                         <ExternalLink size={14} />
                       </Button>

@@ -95,6 +95,7 @@ export const useSyncGithub = () => {
     mutationFn: (id) => projectsApi.syncGithub(id),
     onSuccess: (_, projectId) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.byId(projectId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
       toast.success('GitHub data synced!');
     },
     onError: (error) => {

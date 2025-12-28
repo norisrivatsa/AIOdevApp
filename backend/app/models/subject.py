@@ -119,6 +119,7 @@ class CostInfo(BaseModel):
 
 class Subject(BaseModel):
     id: Optional[str] = None
+    subjectId: Optional[str] = None  # Custom unique ID for linking
 
     # Required fields
     name: str  # Changed from 'title' to match spec
