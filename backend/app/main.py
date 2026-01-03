@@ -5,7 +5,7 @@ import logging
 
 from app.core.config import settings
 from app.core.database import connect_to_mongo, close_mongo_connection
-from app.routes import courses, subjects, practices, projects, sessions, boards, settings_router, analytics, ui_customization, visions
+from app.routes import courses, subjects, practices, practice_sessions, projects, sessions, boards, settings_router, analytics, ui_customization, visions
 
 # Configure logging
 logging.basicConfig(
@@ -47,6 +47,7 @@ app.add_middleware(
 app.include_router(courses.router, prefix=f"{settings.API_V1_PREFIX}/courses", tags=["courses"])
 app.include_router(subjects.router, prefix=f"{settings.API_V1_PREFIX}/subjects", tags=["subjects"])
 app.include_router(practices.router, prefix=f"{settings.API_V1_PREFIX}/practices", tags=["practices"])
+app.include_router(practice_sessions.router, prefix=f"{settings.API_V1_PREFIX}/practice-sessions", tags=["practice-sessions"])
 app.include_router(projects.router, prefix=f"{settings.API_V1_PREFIX}/projects", tags=["projects"])
 app.include_router(sessions.router, prefix=f"{settings.API_V1_PREFIX}/sessions", tags=["sessions"])
 app.include_router(boards.router, prefix=f"{settings.API_V1_PREFIX}/boards", tags=["boards"])

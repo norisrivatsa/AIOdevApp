@@ -36,29 +36,36 @@ class ResourceType(str, Enum):
     OTHER = "other"
 
 
+class SubtopicStatus(str, Enum):
+    ACTIVE = "active"
+    COMPLETED = "completed"
+
+
 class Subtopic(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
-    completed: bool = False
+    status: SubtopicStatus = SubtopicStatus.ACTIVE
     completedDate: Optional[datetime] = None
+    cachedCompletion: float = 0.0  # Cached completion percentage (0-100)
     order: int = 0
-    level: int = 0  # 0 = root, 1 = child, 2 = grandchild, etc.
-    parentId: Optional[str] = None  # null for root, ID of parent for children
-    children: List[str] = []  # Array of child subtopic IDs
+    subtopics: List['Subtopic'] = []  # Nested subtopics
 
     class Config:
         json_schema_extra = {
             "example": {
                 "id": "uuid-here",
                 "name": "Introduction to Python",
-                "completed": False,
+                "status": "active",
                 "completedDate": None,
                 "order": 0,
-                "level": 0,
-                "parentId": None,
-                "children": []
+                "cachedCompletion": 0.0,
+                "subtopics": []
             }
         }
+
+
+# Enable forward references for recursive model
+Subtopic.model_rebuild()
 
 
 class KnowledgeBaseLink(BaseModel):
@@ -166,9 +173,13 @@ class Subject(BaseModel):
     notes: str = ""
 
     # Metadata (calculated/tracked)
-    progress: float = 0.0  # Auto-calculated from subtopic completion (0-100)
+    progress: float = 0.0  # Auto-calculated from subtopic completion (0-100) - same as completionPercentage
+    completionPercentage: float = 0.0  # Overall completion percentage (0-100)
+    completedSubtopicsCount: int = 0  # Total checked subtopics (all levels)
+    totalSubtopicsCount: int = 0  # Total subtopics (all levels)
     timeSpent: float = 0.0  # Calculated from sessions (hours)
     lastStudied: Optional[datetime] = None
+    sessions: List[str] = []  # Array of session IDs for backup/cross-checking
 
     class Config:
         json_schema_extra = {
@@ -280,5 +291,8 @@ class SubjectUpdate(BaseModel):
     cost: Optional[CostInfo] = None
     notes: Optional[str] = None
     progress: Optional[float] = None
+    completionPercentage: Optional[float] = None
+    completedSubtopicsCount: Optional[int] = None
+    totalSubtopicsCount: Optional[int] = None
     timeSpent: Optional[float] = None
     lastStudied: Optional[datetime] = None

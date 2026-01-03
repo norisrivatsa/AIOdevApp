@@ -250,9 +250,10 @@ async def get_daily_activity(
     days: int = Query(30, ge=1, le=365),
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
-    """Get daily activity for calendar heatmap."""
+    """Get daily activity for calendar heatmap with breakdown by subject/project."""
     start_date = datetime.utcnow() - timedelta(days=days)
 
+    # Get total per day
     pipeline = [
         {"$match": {"startTime": {"$gte": start_date}}},
         {
@@ -272,12 +273,61 @@ async def get_daily_activity(
 
     results = await db.sessions.aggregate(pipeline).to_list(365)
 
+    # Get breakdown by subject/project per day
+    breakdown_pipeline = [
+        {"$match": {"startTime": {"$gte": start_date}}},
+        {
+            "$group": {
+                "_id": {
+                    "date": {
+                        "$dateToString": {
+                            "format": "%Y-%m-%d",
+                            "date": "$startTime"
+                        }
+                    },
+                    "referenceType": "$referenceType",
+                    "referenceId": "$referenceId",
+                    "name": "$name"
+                },
+                "duration": {"$sum": "$duration"},
+                "sessionCount": {"$sum": 1}
+            }
+        },
+        {"$sort": {"_id.date": 1}}
+    ]
+
+    breakdown_results = await db.sessions.aggregate(breakdown_pipeline).to_list(1000)
+
+    # Organize breakdown by date
+    breakdown_by_date = {}
+    for item in breakdown_results:
+        date = item["_id"]["date"]
+        if date not in breakdown_by_date:
+            breakdown_by_date[date] = []
+
+        # Handle missing fields for backward compatibility with old sessions
+        ref_type = item["_id"].get("referenceType") or item["_id"].get("type") or "unknown"
+        ref_id = item["_id"].get("referenceId", "unknown")
+        name = item["_id"].get("name", "Unknown")
+
+        breakdown_by_date[date].append({
+            "referenceType": ref_type,
+            "referenceId": ref_id,
+            "name": name,
+            "duration": item["duration"],
+            "hours": round(item["duration"] / 60, 2),  # duration is in minutes
+            "sessionCount": item["sessionCount"]
+        })
+
+    # Combine total and breakdown
     activity = [
         {
             "date": item["_id"],
-            "duration": item["duration"],
-            "hours": round(item["duration"] / 3600, 2),
-            "sessionCount": item["sessionCount"]
+            "duration": item["duration"],  # in minutes
+            "totalSeconds": item["duration"] * 60,  # for backward compatibility
+            "hours": round(item["duration"] / 60, 2),
+            "sessionCount": item["sessionCount"],
+            "breakdown": breakdown_by_date.get(item["_id"], [])
         }
         for item in results
     ]

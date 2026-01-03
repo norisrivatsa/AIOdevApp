@@ -47,7 +47,8 @@ export const useDailyActivity = (days = 30) => {
     queryKey: queryKeys.analytics.dailyActivity(days),
     queryFn: async () => {
       const response = await analyticsApi.getDailyActivity(days);
-      return response.data;
+      // Return just the activity array, not the whole response object
+      return response.data.activity || [];
     },
   });
 };

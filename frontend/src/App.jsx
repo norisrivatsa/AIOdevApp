@@ -15,9 +15,10 @@ import AnalyticsBoard from './boards/AnalyticsBoard';
 import CreationBoard from './boards/CreationBoard';
 import FocusBoard from './boards/FocusBoard';
 import ProjectPage from './pages/ProjectPage';
+import SubjectPage from './pages/SubjectPage';
 
 function App() {
-  const { currentBoardIndex, boards, setBoards, viewingProjectId } = useUIStore();
+  const { currentBoardIndex, boards, setBoards, viewingProjectId, viewingSubjectId } = useUIStore();
   const { loadActiveSession } = useTimerStore();
 
   // Initialize keyboard shortcuts
@@ -58,6 +59,18 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <div className="min-h-screen bg-gray-50 dark:bg-black">
           <ProjectPage projectId={viewingProjectId} />
+        </div>
+        <Toaster position="top-right" />
+      </QueryClientProvider>
+    );
+  }
+
+  // If viewing a specific subject page, render that instead of boards
+  if (viewingSubjectId) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <div className="min-h-screen bg-gray-50 dark:bg-black">
+          <SubjectPage subjectId={viewingSubjectId} />
         </div>
         <Toaster position="top-right" />
       </QueryClientProvider>

@@ -48,10 +48,29 @@ export const useUpdateBoardCustomization = () => {
 
   return useMutation({
     mutationFn: ({ boardId, data }) => uiCustomizationApi.updateBoard(boardId, data),
-    onSuccess: () => {
-      // Don't invalidate queries to prevent refetch loop
-      // The layout is already updated locally, no need to refetch
-      // queryClient.invalidateQueries({ queryKey: queryKeys.uiCustomization.all });
+    onSuccess: (response, variables) => {
+      // Update the cache with optimistic data immediately
+      queryClient.setQueryData(queryKeys.uiCustomization.all, (oldData) => {
+        if (!oldData) return oldData;
+
+        const boards = oldData.boards || [];
+        const existingBoardIndex = boards.findIndex(b => b.boardId === variables.boardId);
+
+        if (existingBoardIndex >= 0) {
+          // Update existing board
+          boards[existingBoardIndex] = variables.data;
+        } else {
+          // Add new board
+          boards.push(variables.data);
+        }
+
+        return {
+          ...oldData,
+          boards
+        };
+      });
+
+      // No toast notification for auto-saves to avoid spam
     },
     onError: (error) => {
       // Log detailed error for debugging

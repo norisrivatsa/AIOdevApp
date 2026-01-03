@@ -49,9 +49,7 @@ const CreationBoard = () => {
 
   // Navigate to subject page
   const handleOpenSubject = (subjectId) => {
-    // TODO: Implement SubjectPage component
-    console.log('Opening subject:', subjectId);
-    // openSubjectPage(subjectId);
+    openSubjectPage(subjectId);
   };
 
   // Navigate to project page

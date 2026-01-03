@@ -29,6 +29,12 @@ const EditableGridLayout = ({ boardId, boardName, children, defaultLayout = [], 
       return;
     }
 
+    // CRITICAL: Don't reload layout while user is actively editing
+    // This prevents the layout from reverting while dragging/resizing
+    if (isEditMode && isInitialized) {
+      return;
+    }
+
     if (customization?.boards) {
       const boardCustomization = customization.boards.find(b => b.boardId === boardId);
       if (boardCustomization?.cards) {
@@ -133,9 +139,10 @@ const EditableGridLayout = ({ boardId, boardName, children, defaultLayout = [], 
 
     updateBoard.mutate({ boardId, data: boardData }, {
       onSettled: () => {
+        // Give more time for the save to complete and prevent premature reloads
         setTimeout(() => {
           isSavingRef.current = false;
-        }, 500);
+        }, 1000);
       }
     });
   }, [isInitialized, disableAutoSave, layout, cardTypes, lockedCards, ratioLocks, boardId, boardName, updateBoard]);

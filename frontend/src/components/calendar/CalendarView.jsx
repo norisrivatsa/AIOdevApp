@@ -7,6 +7,9 @@ const CalendarView = ({ activityData = [], onDateSelect }) => {
   const [viewMode, setViewMode] = useState('month'); // 'month' or 'week'
   const [hoveredDay, setHoveredDay] = useState(null);
 
+  // Debug: Log activity data received
+  console.log('CalendarView activityData:', activityData);
+
   // Get the first day of the month
   const getFirstDayOfMonth = (date) => {
     return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -134,9 +137,9 @@ const CalendarView = ({ activityData = [], onDateSelect }) => {
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <div className="flex items-center gap-4">
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
             {formatDisplayDate()}
@@ -191,9 +194,9 @@ const CalendarView = ({ activityData = [], onDateSelect }) => {
       </div>
 
       {/* Calendar Grid */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden min-h-0">
         {/* Week day headers */}
-        <div className={`grid ${viewMode === 'week' ? 'grid-cols-7' : 'grid-cols-7'} gap-2 mb-2`}>
+        <div className={`grid ${viewMode === 'week' ? 'grid-cols-7' : 'grid-cols-7'} gap-2 mb-2 flex-shrink-0`}>
           {weekDays.map(day => (
             <div
               key={day}
@@ -205,21 +208,26 @@ const CalendarView = ({ activityData = [], onDateSelect }) => {
         </div>
 
         {/* Days grid */}
-        <div className={`grid ${viewMode === 'week' ? 'grid-cols-7' : 'grid-cols-7'} gap-2 flex-1`}>
+        <div className={`grid ${viewMode === 'week' ? 'grid-cols-7 auto-rows-fr' : 'grid-cols-7 auto-rows-fr'} gap-2 flex-1 overflow-hidden`}>
           {getDaysToDisplay.map((date, index) => {
             const activity = getActivityForDate(date);
             const isOutsideMonth = viewMode === 'month' && !isCurrentMonth(date);
             const isTodayDate = isToday(date);
 
+            // Calculate if tooltip should appear above (for bottom rows)
+            const row = Math.floor(index / 7);
+            const totalRows = Math.ceil(getDaysToDisplay.length / 7);
+            const isBottomRow = row >= totalRows - 2; // Last 2 rows show tooltip above
+
             return (
               <div
                 key={index}
                 className={`
-                  relative border-2 rounded-lg p-3 transition-all cursor-pointer
+                  relative border-2 rounded-lg p-2 transition-all cursor-pointer
+                  flex flex-col overflow-hidden
                   ${getIntensityColor(activity)}
                   ${isOutsideMonth ? 'opacity-40' : 'opacity-100'}
                   ${isTodayDate ? 'ring-2 ring-blue-500 dark:ring-blue-400' : ''}
-                  ${viewMode === 'week' ? 'min-h-[120px]' : 'min-h-[80px]'}
                   hover:shadow-lg hover:scale-105 hover:z-10
                 `}
                 onMouseEnter={() => setHoveredDay(date.toISOString())}
@@ -227,7 +235,7 @@ const CalendarView = ({ activityData = [], onDateSelect }) => {
                 onClick={() => onDateSelect?.(date)}
               >
                 {/* Date number */}
-                <div className={`text-lg font-semibold mb-1 ${
+                <div className={`text-lg font-bold mb-1 ${
                   isOutsideMonth
                     ? 'text-gray-400 dark:text-gray-600'
                     : 'text-gray-900 dark:text-white'
@@ -235,16 +243,29 @@ const CalendarView = ({ activityData = [], onDateSelect }) => {
                   {date.getDate()}
                 </div>
 
-                {/* Activity indicator */}
-                {activity && activity.totalSeconds > 0 && (
-                  <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                    {formatDuration(activity.totalSeconds)}
+                {/* Activity indicator - Make more prominent */}
+                {activity && activity.totalSeconds > 0 ? (
+                  <div className="mt-auto">
+                    <div className="text-base font-bold text-gradient">
+                      {Math.floor(activity.totalSeconds / 3600)}h {Math.floor((activity.totalSeconds % 3600) / 60)}m
+                    </div>
+                    <div className="text-[10px] text-gray-600 dark:text-gray-400">
+                      {activity.sessionCount} {activity.sessionCount === 1 ? 'session' : 'sessions'}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-auto text-xs text-gray-400 dark:text-gray-600">
+                    No activity
                   </div>
                 )}
 
-                {/* Hover info panel */}
+                {/* Hover info panel - Smart positioning */}
                 {hoveredDay === date.toISOString() && (
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-50 w-64 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-xl border-2 border-gray-200 dark:border-gray-700">
+                  <div className={`absolute left-1/2 transform -translate-x-1/2 z-50 w-80 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-xl border-2 border-gray-200 dark:border-gray-700 ${
+                    isBottomRow
+                      ? 'bottom-full mb-2' // Show above for bottom rows
+                      : 'top-full mt-2'    // Show below for top rows
+                  }`}>
                     <div className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
                       {date.toLocaleDateString('en-US', {
                         weekday: 'long',
@@ -255,8 +276,8 @@ const CalendarView = ({ activityData = [], onDateSelect }) => {
                     </div>
 
                     {activity && activity.totalSeconds > 0 ? (
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center pb-2 border-b border-gray-200 dark:border-gray-700">
                           <span className="text-xs text-gray-600 dark:text-gray-400">Total Time:</span>
                           <span className="text-sm font-semibold text-gradient">
                             {formatDuration(activity.totalSeconds)}
@@ -274,6 +295,38 @@ const CalendarView = ({ activityData = [], onDateSelect }) => {
                             <span className="text-sm font-medium text-gray-900 dark:text-white">
                               {formatDuration(Math.floor(activity.totalSeconds / activity.sessionCount))}
                             </span>
+                          </div>
+                        )}
+
+                        {/* Breakdown by Subject/Project */}
+                        {activity.breakdown && activity.breakdown.length > 0 && (
+                          <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                            <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Breakdown:
+                            </div>
+                            <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                              {activity.breakdown.map((item, idx) => (
+                                <div key={idx} className="flex items-center justify-between text-xs">
+                                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                                      item.referenceType === 'subject'
+                                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                                        : item.referenceType === 'project'
+                                        ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                                        : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                                    }`}>
+                                      {item.referenceType === 'subject' ? 'S' : item.referenceType === 'project' ? 'P' : 'Pr'}
+                                    </span>
+                                    <span className="text-gray-700 dark:text-gray-300 truncate" title={item.name}>
+                                      {item.name}
+                                    </span>
+                                  </div>
+                                  <span className="text-gray-900 dark:text-white font-medium ml-2">
+                                    {item.hours}h
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>

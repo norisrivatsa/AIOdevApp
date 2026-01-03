@@ -9,13 +9,20 @@ const useTimerStore = create((set, get) => ({
   timerInterval: null,
 
   // Timer actions
-  startTimer: async (type, referenceId, referenceName) => {
+  startTimer: async (referenceType, referenceId, name, sessionType = 'study') => {
     try {
-      // Create a new session
+      const now = new Date();
+      const dateOnly = new Date(now);
+      dateOnly.setHours(0, 0, 0, 0);
+
+      // Create a new session with new format
       const response = await sessionsApi.create({
-        type,
-        referenceId,
-        startTime: new Date().toISOString(),
+        name,                          // Name of subject/project
+        referenceType,                 // 'subject' | 'project' | 'practice_platform'
+        referenceId,                   // ID of the entity
+        sessionType,                   // 'study' | 'practice'
+        date: dateOnly.toISOString(),  // Date of session
+        startTime: now.toISOString(),  // Start timestamp
         notes: '',
         tags: [],
         manualEntry: false,
@@ -31,7 +38,7 @@ const useTimerStore = create((set, get) => ({
       }, 1000);
 
       set({
-        activeSession: { ...session, referenceName },
+        activeSession: session,
         isRunning: true,
         elapsedSeconds: 0,
         timerInterval: interval,
@@ -55,11 +62,15 @@ const useTimerStore = create((set, get) => ({
         clearInterval(timerInterval);
       }
 
-      // Update the session with end time
+      // Convert seconds to minutes (rounded)
+      const durationMinutes = Math.round(elapsedSeconds / 60);
+
+      // Update the session with end time and duration in minutes
       const response = await sessionsApi.update(activeSession.id, {
+        ...activeSession,
         endTime: new Date().toISOString(),
         notes,
-        duration: elapsedSeconds,
+        duration: durationMinutes,  // Duration in MINUTES
       });
 
       set({

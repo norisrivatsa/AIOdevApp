@@ -115,3 +115,44 @@ export const isToday = (date) => {
   const checkDate = new Date(date);
   return checkDate.toDateString() === today.toDateString();
 };
+
+/**
+ * IST Timezone Utilities
+ * IST is UTC+5:30
+ */
+const IST_OFFSET = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in milliseconds
+
+/**
+ * Get current date and time in IST
+ */
+export const getISTNow = () => {
+  const now = new Date();
+  return new Date(now.getTime() + IST_OFFSET);
+};
+
+/**
+ * Get today's date in IST (YYYY-MM-DD format)
+ */
+export const getISTToday = () => {
+  const istNow = getISTNow();
+  return istNow.toISOString().split('T')[0];
+};
+
+/**
+ * Convert a date to IST and return ISO string
+ */
+export const toISTString = (date) => {
+  const d = new Date(date);
+  const istDate = new Date(d.getTime() + IST_OFFSET);
+  return istDate.toISOString();
+};
+
+/**
+ * Get IST date string from date input (YYYY-MM-DD) and time input (HH:MM)
+ * Returns ISO string in UTC (which represents the IST time)
+ */
+export const getISTDateTimeString = (dateStr, timeStr) => {
+  // Create date string in IST format
+  const istDateTimeStr = `${dateStr}T${timeStr}:00.000+05:30`;
+  return new Date(istDateTimeStr).toISOString();
+};

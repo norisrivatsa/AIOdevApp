@@ -152,6 +152,9 @@ class Project(BaseModel):
     environmentNotes: str = ""
     setupCommands: str = ""
 
+    # Session tracking (for backup/cross-checking)
+    sessions: List[str] = []  # Array of session IDs
+
     class Config:
         json_schema_extra = {
             "example": {

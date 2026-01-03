@@ -46,6 +46,35 @@ export const useCreateSubject = () => {
   });
 };
 
+// Helper to format validation errors
+const formatValidationError = (error) => {
+  if (!error.response?.data?.detail) {
+    return 'An error occurred';
+  }
+
+  const detail = error.response.data.detail;
+
+  // If detail is a string, return it directly
+  if (typeof detail === 'string') {
+    return detail;
+  }
+
+  // If detail is an array of validation errors
+  if (Array.isArray(detail)) {
+    return detail.map(err => {
+      const field = err.loc?.slice(1).join('.') || 'field';
+      return `${field}: ${err.msg}`;
+    }).join(', ');
+  }
+
+  // If detail is an object, try to extract message
+  if (typeof detail === 'object') {
+    return detail.msg || detail.message || JSON.stringify(detail);
+  }
+
+  return 'Validation error';
+};
+
 export const useUpdateSubject = () => {
   const queryClient = useQueryClient();
 
@@ -57,7 +86,25 @@ export const useUpdateSubject = () => {
       toast.success('Subject updated successfully!');
     },
     onError: (error) => {
-      toast.error(error.response?.data?.detail || 'Failed to update subject');
+      const errorMessage = formatValidationError(error);
+      toast.error(errorMessage || 'Failed to update subject');
+    },
+  });
+};
+
+export const usePartialUpdateSubject = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, updates }) => subjectsApi.partialUpdate(id, updates),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.subjects.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subjects.byId(variables.id) });
+      toast.success('Subject updated successfully!');
+    },
+    onError: (error) => {
+      const errorMessage = formatValidationError(error);
+      toast.error(errorMessage || 'Failed to update subject');
     },
   });
 };
@@ -72,7 +119,8 @@ export const useDeleteSubject = () => {
       toast.success('Subject deleted successfully!');
     },
     onError: (error) => {
-      toast.error(error.response?.data?.detail || 'Failed to delete subject');
+      const errorMessage = formatValidationError(error);
+      toast.error(errorMessage || 'Failed to delete subject');
     },
   });
 };
@@ -87,7 +135,8 @@ export const useAddSubtopic = () => {
       toast.success('Subtopic added!');
     },
     onError: (error) => {
-      toast.error(error.response?.data?.detail || 'Failed to add subtopic');
+      const errorMessage = formatValidationError(error);
+      toast.error(errorMessage || 'Failed to add subtopic');
     },
   });
 };
@@ -102,7 +151,8 @@ export const useUpdateSubtopic = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.subjects.byId(variables.subjectId) });
     },
     onError: (error) => {
-      toast.error(error.response?.data?.detail || 'Failed to update subtopic');
+      const errorMessage = formatValidationError(error);
+      toast.error(errorMessage || 'Failed to update subtopic');
     },
   });
 };
@@ -118,7 +168,36 @@ export const useDeleteSubtopic = () => {
       toast.success('Subtopic deleted!');
     },
     onError: (error) => {
-      toast.error(error.response?.data?.detail || 'Failed to delete subtopic');
+      const errorMessage = formatValidationError(error);
+      toast.error(errorMessage || 'Failed to delete subtopic');
     },
+  });
+};
+
+export const useToggleSubtopicCompletion = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ subjectId, subtopicId }) =>
+      subjectsApi.toggleSubtopicCompletion(subjectId, subtopicId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.subjects.byId(variables.subjectId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subjects.all });
+    },
+    onError: (error) => {
+      const errorMessage = formatValidationError(error);
+      toast.error(errorMessage || 'Failed to toggle subtopic');
+    },
+  });
+};
+
+export const useSubjectProgress = (subjectId) => {
+  return useQuery({
+    queryKey: ['subjects', subjectId, 'progress'],
+    queryFn: async () => {
+      const response = await subjectsApi.getProgress(subjectId);
+      return response.data;
+    },
+    enabled: !!subjectId,
   });
 };

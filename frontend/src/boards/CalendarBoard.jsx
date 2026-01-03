@@ -1,22 +1,35 @@
 import { useState } from 'react';
 import { useDailyActivity } from '../hooks/useAnalytics';
 import { useTimeBreakdown } from '../hooks/useTimeBreakdown';
+import { useSubjects } from '../hooks/useSubjects';
+import { useProjects } from '../hooks/useProjects';
+import { useCreateSession } from '../hooks/useSessions';
 import Card from '../components/ui/Card';
 import CalendarView from '../components/calendar/CalendarView';
 import TimeBreakdownPieChart from '../components/charts/TimeBreakdownPieChart';
 import EditableGridLayout from '../components/layout/EditableGridLayout';
+import AddSessionModal from '../components/sessions/AddSessionModal';
 import { formatDate, formatDuration } from '../utils/date';
 import Button from '../components/ui/Button';
-import { Clock } from 'lucide-react';
+import { Clock, Plus } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const CalendarBoard = () => {
   const [days, setDays] = useState(90); // Fetch more data for calendar
   const { data: activity, isLoading } = useDailyActivity(days);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [isAddSessionModalOpen, setIsAddSessionModalOpen] = useState(false);
 
   // Get time breakdown for month and week
   const { data: monthBreakdown, isLoading: monthLoading } = useTimeBreakdown('month');
   const { data: weekBreakdown, isLoading: weekLoading } = useTimeBreakdown('week');
+
+  // Fetch subjects and projects for the modal
+  const { data: subjects = [] } = useSubjects();
+  const { data: projects = [] } = useProjects();
+
+  // Create session mutation
+  const { mutate: createSession, isPending: isCreatingSession } = useCreateSession();
 
   if (isLoading || monthLoading || weekLoading) {
     return (
@@ -28,6 +41,9 @@ const CalendarBoard = () => {
 
   // Ensure activity is an array and handle errors
   const activityData = Array.isArray(activity) ? activity : [];
+
+  // Debug: Log activity data to check if it's loading
+  console.log('Calendar activity data:', activityData);
 
   // Handle data validation - ensure breakdown objects are properly structured
   const safeMonthBreakdown = monthBreakdown && typeof monthBreakdown === 'object' && !Array.isArray(monthBreakdown)
@@ -55,6 +71,19 @@ const CalendarBoard = () => {
   const handleDateSelect = (date) => {
     setSelectedDate(date);
     console.log('Selected date:', date);
+  };
+
+  const handleSessionSubmit = (sessionData) => {
+    createSession(sessionData, {
+      onSuccess: () => {
+        toast.success('Session added successfully!');
+        setIsAddSessionModalOpen(false);
+      },
+      onError: (error) => {
+        console.error('Failed to create session:', error);
+        toast.error(error.response?.data?.detail || 'Failed to add session');
+      },
+    });
   };
 
   // Default layout for calendar board cards
@@ -207,6 +236,24 @@ const CalendarBoard = () => {
       >
         {cards}
       </EditableGridLayout>
+
+      {/* Floating Add Session Button */}
+      <button
+        onClick={() => setIsAddSessionModalOpen(true)}
+        className="fixed bottom-8 right-8 p-4 btn-gradient text-white rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 z-50"
+        title="Add Session"
+      >
+        <Plus size={24} />
+      </button>
+
+      {/* Add Session Modal */}
+      <AddSessionModal
+        isOpen={isAddSessionModalOpen}
+        onClose={() => setIsAddSessionModalOpen(false)}
+        onSubmit={handleSessionSubmit}
+        subjects={subjects}
+        projects={projects}
+      />
     </div>
   );
 };

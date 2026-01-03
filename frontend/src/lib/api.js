@@ -78,6 +78,9 @@ export const subjectsApi = {
   update: (id, data) =>
     apiClient.put(`/subjects/${id}`, data),
 
+  partialUpdate: (id, updates) =>
+    apiClient.patch(`/subjects/${id}`, updates),
+
   delete: (id) =>
     apiClient.delete(`/subjects/${id}`),
 
@@ -89,6 +92,12 @@ export const subjectsApi = {
 
   deleteSubtopic: (subjectId, subtopicId) =>
     apiClient.delete(`/subjects/${subjectId}/subtopics/${subtopicId}`),
+
+  toggleSubtopicCompletion: (subjectId, subtopicId) =>
+    apiClient.put(`/subjects/${subjectId}/subtopics/${subtopicId}/toggle`),
+
+  getProgress: (subjectId) =>
+    apiClient.get(`/subjects/${subjectId}/progress`),
 };
 
 // ============================================
@@ -112,6 +121,32 @@ export const practicesApi = {
 
   updateStats: (id, data) =>
     apiClient.put(`/practices/${id}/stats`, data),
+};
+
+// ============================================
+// PRACTICE SESSIONS API
+// ============================================
+export const practiceSessionsApi = {
+  getAll: (subjectId) =>
+    apiClient.get('/practice-sessions', { params: subjectId ? { subject_id: subjectId } : {} }),
+
+  getById: (id) =>
+    apiClient.get(`/practice-sessions/${id}`),
+
+  create: (data) =>
+    apiClient.post('/practice-sessions', data),
+
+  update: (id, data) =>
+    apiClient.put(`/practice-sessions/${id}`, data),
+
+  partialUpdate: (id, updates) =>
+    apiClient.patch(`/practice-sessions/${id}`, updates),
+
+  delete: (id) =>
+    apiClient.delete(`/practice-sessions/${id}`),
+
+  getSubjectStats: (subjectId) =>
+    apiClient.get(`/practice-sessions/subject/${subjectId}/stats`),
 };
 
 // ============================================

@@ -3,7 +3,7 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 from bson import ObjectId
 
-from app.models.session import Session
+from app.models.session import Session, generate_session_id
 from app.core.database import get_database
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
@@ -15,13 +15,31 @@ def serialize_session(session_doc: dict) -> dict:
     if session_doc and "_id" in session_doc:
         session_doc["id"] = str(session_doc["_id"])
         del session_doc["_id"]
+
+    # Backwards compatibility: handle old 'type' field
+    if "type" in session_doc and "referenceType" not in session_doc:
+        session_doc["referenceType"] = session_doc["type"]
+
+    # Default sessionType if not present
+    if "sessionType" not in session_doc:
+        session_doc["sessionType"] = "study"
+
+    # Ensure date field exists
+    if "date" not in session_doc and "startTime" in session_doc:
+        session_doc["date"] = session_doc["startTime"]
+
+    # Default name if not present
+    if "name" not in session_doc:
+        session_doc["name"] = "Unknown"
+
     return session_doc
 
 
 @router.get("/", response_model=List[Session])
 async def list_sessions(
-    type_filter: Optional[str] = Query(None),
-    reference_id: Optional[str] = Query(None),
+    type_filter: Optional[str] = Query(None, description="Filter by referenceType (subject/project/practice_platform)"),
+    reference_id: Optional[str] = Query(None, description="Filter by referenceId"),
+    session_type: Optional[str] = Query(None, description="Filter by sessionType (study/practice)"),
     start_date: Optional[datetime] = Query(None),
     end_date: Optional[datetime] = Query(None),
     limit: int = Query(100, le=1000),
@@ -31,9 +49,15 @@ async def list_sessions(
     query = {}
 
     if type_filter:
-        query["type"] = type_filter
+        # Support both old 'type' field and new 'referenceType' field
+        query["$or"] = [
+            {"referenceType": type_filter},
+            {"type": type_filter}  # Backwards compatibility
+        ]
     if reference_id:
         query["referenceId"] = reference_id
+    if session_type:
+        query["sessionType"] = session_type
     if start_date or end_date:
         query["startTime"] = {}
         if start_date:
@@ -54,15 +78,48 @@ async def create_session(
     session_dict = session.model_dump(exclude={"id"})
     session_dict["createdAt"] = datetime.utcnow()
 
+    # Generate custom uniqueId if not provided
+    if not session_dict.get("uniqueId"):
+        session_dict["uniqueId"] = generate_session_id(
+            session_dict.get("referenceType", "subject"),
+            session_dict.get("name", "Unknown")
+        )
+
+    # Set date to start of startTime date if not provided
+    if not session_dict.get("date"):
+        start_time = session_dict.get("startTime", datetime.utcnow())
+        session_dict["date"] = start_time.replace(hour=0, minute=0, second=0, microsecond=0)
+
     # If endTime is not provided, session is ongoing
     if session_dict.get("endTime"):
-        # Calculate duration
+        # Calculate duration in MINUTES
         start = session_dict["startTime"]
         end = session_dict["endTime"]
-        session_dict["duration"] = int((end - start).total_seconds())
+        duration_seconds = (end - start).total_seconds()
+        session_dict["duration"] = int(duration_seconds / 60)  # Convert to minutes
 
     result = await db.sessions.insert_one(session_dict)
     created_session = await db.sessions.find_one({"_id": result.inserted_id})
+
+    # Add session ID to subject/project for backup/cross-checking
+    session_id = str(result.inserted_id)
+    reference_type = session_dict.get("referenceType")
+    reference_id = session_dict.get("referenceId")
+
+    try:
+        if reference_type == "subject":
+            await db.subjects.update_one(
+                {"id": reference_id},
+                {"$addToSet": {"sessions": session_id}}  # addToSet prevents duplicates
+            )
+        elif reference_type == "project":
+            await db.projects.update_one(
+                {"id": reference_id},
+                {"$addToSet": {"sessions": session_id}}
+            )
+    except Exception as e:
+        # Log but don't fail the session creation
+        print(f"Warning: Failed to link session to {reference_type}: {e}")
 
     return serialize_session(created_session)
 
@@ -118,11 +175,19 @@ async def update_session(
     # Update session
     update_dict = session_update.model_dump(exclude={"id", "createdAt"})
 
-    # Recalculate duration if endTime is set
+    # Generate uniqueId if not present
+    if not update_dict.get("uniqueId") and not existing_session.get("uniqueId"):
+        update_dict["uniqueId"] = generate_session_id(
+            update_dict.get("referenceType", existing_session.get("referenceType", "subject")),
+            update_dict.get("name", existing_session.get("name", "Unknown"))
+        )
+
+    # Recalculate duration in MINUTES if endTime is set
     if update_dict.get("endTime") and update_dict.get("startTime"):
         start = update_dict["startTime"]
         end = update_dict["endTime"]
-        update_dict["duration"] = int((end - start).total_seconds())
+        duration_seconds = (end - start).total_seconds()
+        update_dict["duration"] = int(duration_seconds / 60)  # Convert to minutes
 
     await db.sessions.update_one(
         {"_id": oid},
