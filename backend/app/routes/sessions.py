@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, status, Query
 from typing import List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from bson import ObjectId
 
 from app.models.session import Session, generate_session_id
@@ -8,6 +8,9 @@ from app.core.database import get_database
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 router = APIRouter()
+
+# IST is UTC+5:30
+IST = timezone(timedelta(hours=5, minutes=30))
 
 
 def serialize_session(session_doc: dict) -> dict:
@@ -85,10 +88,36 @@ async def create_session(
             session_dict.get("name", "Unknown")
         )
 
-    # Set date to start of startTime date if not provided
-    if not session_dict.get("date"):
+    # Handle date field - can be either a string (YYYY-MM-DD in IST) or datetime
+    date_field = session_dict.get("date")
+    if isinstance(date_field, str):
+        # Parse the date string as IST date (YYYY-MM-DD)
+        try:
+            # Just store the date string as-is, it represents IST date
+            session_dict["date"] = datetime.fromisoformat(date_field)
+        except (ValueError, TypeError):
+            # Fallback to extracting from startTime
+            start_time = session_dict.get("startTime", datetime.utcnow())
+            if start_time.tzinfo is None:
+                start_time = start_time.replace(tzinfo=timezone.utc)
+            start_time_ist = start_time.astimezone(IST)
+            session_dict["date"] = start_time_ist.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif isinstance(date_field, datetime):
+        # If it's already a datetime, keep it but remove time components
+        if date_field.tzinfo is None:
+            # Assume it's already in IST format if no timezone
+            session_dict["date"] = date_field.replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            # If it has timezone, convert from UTC to IST date
+            date_ist = date_field.astimezone(IST)
+            session_dict["date"] = date_ist.replace(hour=0, minute=0, second=0, microsecond=0)
+    else:
+        # Fallback: extract from startTime
         start_time = session_dict.get("startTime", datetime.utcnow())
-        session_dict["date"] = start_time.replace(hour=0, minute=0, second=0, microsecond=0)
+        if start_time.tzinfo is None:
+            start_time = start_time.replace(tzinfo=timezone.utc)
+        start_time_ist = start_time.astimezone(IST)
+        session_dict["date"] = start_time_ist.replace(hour=0, minute=0, second=0, microsecond=0)
 
     # If endTime is not provided, session is ongoing
     if session_dict.get("endTime"):
@@ -227,24 +256,36 @@ async def get_sessions_summary(
     if reference_id:
         match_stage = {"referenceId": reference_id}
 
-    # Get today's stats
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    # Get current time in IST and convert to UTC for queries
+    now_utc = datetime.utcnow()
+    now_utc = now_utc.replace(tzinfo=timezone.utc)
+    now_ist = now_utc.astimezone(IST)
+    
+    # Get today's stats (in IST)
+    today_start_ist = now_ist.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start_utc = today_start_ist.astimezone(timezone.utc).replace(tzinfo=None)
+    
     today_pipeline = [
-        {"$match": {**match_stage, "startTime": {"$gte": today_start}}},
+        {"$match": {**match_stage, "startTime": {"$gte": today_start_utc}}},
         {"$group": {"_id": None, "totalDuration": {"$sum": "$duration"}}}
     ]
 
-    # Get this week's stats
-    week_start = today_start - timedelta(days=today_start.weekday())
+    # Get this week's stats (in IST)
+    days_since_monday = now_ist.weekday()
+    week_start_ist = today_start_ist - timedelta(days=days_since_monday)
+    week_start_utc = week_start_ist.astimezone(timezone.utc).replace(tzinfo=None)
+    
     week_pipeline = [
-        {"$match": {**match_stage, "startTime": {"$gte": week_start}}},
+        {"$match": {**match_stage, "startTime": {"$gte": week_start_utc}}},
         {"$group": {"_id": None, "totalDuration": {"$sum": "$duration"}}}
     ]
 
-    # Get this month's stats
-    month_start = today_start.replace(day=1)
+    # Get this month's stats (in IST)
+    month_start_ist = now_ist.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    month_start_utc = month_start_ist.astimezone(timezone.utc).replace(tzinfo=None)
+    
     month_pipeline = [
-        {"$match": {**match_stage, "startTime": {"$gte": month_start}}},
+        {"$match": {**match_stage, "startTime": {"$gte": month_start_utc}}},
         {"$group": {"_id": None, "totalDuration": {"$sum": "$duration"}}}
     ]
 

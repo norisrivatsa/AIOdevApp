@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { sessionsApi } from '../lib/api';
+import { getISTToday, getISTNow } from '../utils/date';
 
 const useTimerStore = create((set, get) => ({
   // Active session data
@@ -12,8 +13,8 @@ const useTimerStore = create((set, get) => ({
   startTimer: async (referenceType, referenceId, name, sessionType = 'study') => {
     try {
       const now = new Date();
-      const dateOnly = new Date(now);
-      dateOnly.setHours(0, 0, 0, 0);
+      // Use IST date for the date field instead of local browser time
+      const istToday = getISTToday();
 
       // Create a new session with new format
       const response = await sessionsApi.create({
@@ -21,8 +22,8 @@ const useTimerStore = create((set, get) => ({
         referenceType,                 // 'subject' | 'project' | 'practice_platform'
         referenceId,                   // ID of the entity
         sessionType,                   // 'study' | 'practice'
-        date: dateOnly.toISOString(),  // Date of session
-        startTime: now.toISOString(),  // Start timestamp
+        date: istToday,                // Date of session in IST (YYYY-MM-DD string)
+        startTime: now.toISOString(),  // Start timestamp in UTC
         notes: '',
         tags: [],
         manualEntry: false,

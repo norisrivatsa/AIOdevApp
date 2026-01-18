@@ -1,11 +1,35 @@
 from fastapi import APIRouter, Depends, Query
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from app.core.database import get_database
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 router = APIRouter()
+
+# IST is UTC+5:30
+IST = timezone(timedelta(hours=5, minutes=30))
+
+
+def get_ist_now():
+    """Get current time in IST timezone."""
+    return datetime.now(IST)
+
+
+def get_ist_today_start():
+    """Get start of today in IST timezone."""
+    now_ist = get_ist_now()
+    return now_ist.replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+def get_utc_from_ist_date(ist_date_str: str) -> datetime:
+    """Convert IST date string (YYYY-MM-DD) to UTC datetime at start of day."""
+    # Parse IST date
+    ist_date = datetime.fromisoformat(ist_date_str)
+    # Set to start of day in IST
+    ist_dt = ist_date.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=IST)
+    # Convert to UTC
+    return ist_dt.astimezone(timezone.utc).replace(tzinfo=None)
 
 
 @router.get("/time-summary")
@@ -17,15 +41,21 @@ async def get_time_summary(
     Get time summary for a specific period.
     Period can be: day, week, month
     """
-    now = datetime.utcnow()
-    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start_ist = get_ist_today_start()
+    # Convert IST start of day to UTC for database query
+    today_start_utc = today_start_ist.astimezone(timezone.utc).replace(tzinfo=None)
 
     if period == "day":
-        start_date = today_start
+        start_date = today_start_utc
     elif period == "week":
-        start_date = today_start - timedelta(days=today_start.weekday())
+        # Get start of week (Monday) in IST, then convert to UTC
+        days_since_monday = today_start_ist.weekday()
+        week_start_ist = today_start_ist - timedelta(days=days_since_monday)
+        start_date = week_start_ist.astimezone(timezone.utc).replace(tzinfo=None)
     else:  # month
-        start_date = today_start.replace(day=1)
+        # Get start of month in IST, then convert to UTC
+        month_start_ist = today_start_ist.replace(day=1)
+        start_date = month_start_ist.astimezone(timezone.utc).replace(tzinfo=None)
 
     # Aggregate total time
     pipeline = [
@@ -63,7 +93,9 @@ async def get_time_distribution(
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
     """Get time distribution by type (subject vs project vs practice) over specified days."""
-    start_date = datetime.utcnow() - timedelta(days=days)
+    today_start_ist = get_ist_today_start()
+    today_start_utc = today_start_ist.astimezone(timezone.utc).replace(tzinfo=None)
+    start_date = today_start_utc - timedelta(days=days)
 
     pipeline = [
         {"$match": {"startTime": {"$gte": start_date}}},

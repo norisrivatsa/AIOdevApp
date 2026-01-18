@@ -156,3 +156,20 @@ export const getISTDateTimeString = (dateStr, timeStr) => {
   const istDateTimeStr = `${dateStr}T${timeStr}:00.000+05:30`;
   return new Date(istDateTimeStr).toISOString();
 };
+
+
+export const formatDecimalHours = (hours) => {
+  if (hours == null || isNaN(hours)) return '0 min';
+
+  const wholeHours = Math.floor(hours);
+  let minutes = Math.round((hours - wholeHours) * 60);
+
+  // Handle edge case: 1.999 → 2 hr 0 min
+  if (minutes === 60) {
+    return `${wholeHours + 1} hr 0 min`;
+  }
+
+  if (wholeHours > 0 && minutes > 0) return `${wholeHours} hr ${minutes} min`;
+  if (wholeHours > 0) return `${wholeHours} hr 0 min`;
+  return `${minutes} min`;
+};

@@ -15,6 +15,13 @@ const CalendarView = ({ activityData = [], onDateSelect }) => {
     return new Date(date.getFullYear(), date.getMonth(), 1);
   };
 
+  const toDateKey = (date) => {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+
+
+  // console.log('Current Date:', currentDate);
+  // console.log('getFirstDayOfMonth:', getFirstDayOfMonth(currentDate));
   // Get the last day of the month
   const getLastDayOfMonth = (date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0);
@@ -60,10 +67,15 @@ const CalendarView = ({ activityData = [], onDateSelect }) => {
   }, [currentDate, viewMode]);
 
   // Find activity data for a specific date
+  // const getActivityForDate = (date) => {
+  //   const dateStr = date.toISOString().split('T')[0];
+  //   return activityData.find(d => d.date.split('T')[0] === dateStr);
+  // };
+
   const getActivityForDate = (date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    return activityData.find(d => d.date.split('T')[0] === dateStr);
-  };
+  const dateKey = toDateKey(date);
+  return activityData.find(d => d.date === dateKey);
+};
 
   // Navigate to previous period
   const handlePrevious = () => {
@@ -208,7 +220,7 @@ const CalendarView = ({ activityData = [], onDateSelect }) => {
         </div>
 
         {/* Days grid */}
-        <div className={`grid ${viewMode === 'week' ? 'grid-cols-7 auto-rows-fr' : 'grid-cols-7 auto-rows-fr'} gap-2 flex-1 overflow-hidden`}>
+        <div className={`grid ${viewMode === 'week' ? 'grid-cols-7 auto-rows-fr' : 'grid-cols-7 auto-rows-fr'} gap-2 flex-1 overflow-hidden p-4`}>
           {getDaysToDisplay.map((date, index) => {
             const activity = getActivityForDate(date);
             const isOutsideMonth = viewMode === 'month' && !isCurrentMonth(date);
@@ -230,7 +242,7 @@ const CalendarView = ({ activityData = [], onDateSelect }) => {
                   ${isTodayDate ? 'ring-2 ring-blue-500 dark:ring-blue-400' : ''}
                   hover:shadow-lg hover:scale-105 hover:z-10
                 `}
-                onMouseEnter={() => setHoveredDay(date.toISOString())}
+                onMouseEnter={() => setHoveredDay(toDateKey(date))}
                 onMouseLeave={() => setHoveredDay(null)}
                 onClick={() => onDateSelect?.(date)}
               >
@@ -260,7 +272,7 @@ const CalendarView = ({ activityData = [], onDateSelect }) => {
                 )}
 
                 {/* Hover info panel - Smart positioning */}
-                {hoveredDay === date.toISOString() && (
+                {hoveredDay === toDateKey(date) && (
                   <div className={`absolute left-1/2 transform -translate-x-1/2 z-50 w-80 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-xl border-2 border-gray-200 dark:border-gray-700 ${
                     isBottomRow
                       ? 'bottom-full mb-2' // Show above for bottom rows

@@ -13,6 +13,8 @@ import { formatDate, formatDuration } from '../utils/date';
 import Button from '../components/ui/Button';
 import { Clock, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { formatDecimalHours } from '../utils/date';
+
 
 const CalendarBoard = () => {
   const [days, setDays] = useState(90); // Fetch more data for calendar
@@ -23,7 +25,9 @@ const CalendarBoard = () => {
   // Get time breakdown for month and week
   const { data: monthBreakdown, isLoading: monthLoading } = useTimeBreakdown('month');
   const { data: weekBreakdown, isLoading: weekLoading } = useTimeBreakdown('week');
-
+  
+  console.log('Month Breakdown:', monthBreakdown);
+  console.log('Week Breakdown:', weekBreakdown);
   // Fetch subjects and projects for the modal
   const { data: subjects = [] } = useSubjects();
   const { data: projects = [] } = useProjects();
@@ -180,8 +184,8 @@ const CalendarBoard = () => {
             This Month
           </h4>
         </div>
-        <div className="text-2xl font-bold text-gradient">
-          {safeMonthBreakdown?.totalHours?.toFixed(1) || '0.0'}h
+        <div className="text-3xl font-bold text-gradient fixed bottom-8 right-8">
+          {formatDecimalHours(safeMonthBreakdown?.totalHours)}
         </div>
       </Card.Body>
     </Card>,
@@ -195,8 +199,8 @@ const CalendarBoard = () => {
             This Week
           </h4>
         </div>
-        <div className="text-2xl font-bold text-gradient">
-          {safeWeekBreakdown?.totalHours?.toFixed(1) || '0.0'}h
+        <div className="text-3xl font-bold text-gradient fixed bottom-8 right-8">
+          {formatDecimalHours(safeWeekBreakdown?.totalHours)}
         </div>
       </Card.Body>
     </Card>,
@@ -226,6 +230,8 @@ const CalendarBoard = () => {
       </Card.Body>
     </Card>,
   ];
+  console.log('safeMonthBreakdown:', safeMonthBreakdown);
+
 
   return (
     <div className="h-full overflow-hidden bg-gray-50 dark:bg-black">

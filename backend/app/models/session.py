@@ -73,6 +73,7 @@ class Session(BaseModel):
                 "date": "2025-01-15T00:00:00",
                 "startTime": "2025-01-15T09:00:00",
                 "endTime": "2025-01-15T11:00:00",
+                "timezone": "Asia/Kolkata",
                 "duration": 120,
                 "notes": "Completed React hooks module",
                 "tags": ["learning", "focused"],

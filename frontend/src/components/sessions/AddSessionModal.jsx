@@ -71,7 +71,7 @@ const AddSessionModal = ({ isOpen, onClose, onSubmit, subjects = [], projects = 
       referenceType: formData.referenceType,
       referenceId: formData.referenceId,
       sessionType: formData.sessionType,
-      date: getISTDateTimeString(formData.date, '00:00'),
+      date: formData.date, // Send date as plain YYYY-MM-DD string (IST date)
       startTime: getISTDateTimeString(formData.date, formData.startTime),
       endTime: getISTDateTimeString(formData.date, formData.endTime),
       duration,

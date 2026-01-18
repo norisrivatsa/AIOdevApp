@@ -92,11 +92,11 @@ export const useTimeBreakdown = (period = 'month') => {
     filteredSessions.forEach(session => {
       totalDuration += session.duration;
 
-      if (session.type === 'course') {
+      if (session.referenceType === 'course') {
         totalCourseDuration += session.duration;
         const current = courseMap.get(session.referenceId) || 0;
         courseMap.set(session.referenceId, current + session.duration);
-      } else if (session.type === 'project') {
+      } else if (session.referenceType === 'project') {
         totalProjectDuration += session.duration;
         const current = projectMap.get(session.referenceId) || 0;
         projectMap.set(session.referenceId, current + session.duration);
@@ -110,7 +110,7 @@ export const useTimeBreakdown = (period = 'month') => {
         id,
         name: course?.title || 'Unknown Course',
         duration,
-        hours: parseFloat((duration / 3600).toFixed(2)),
+        hours: parseFloat((duration / 60).toFixed(2)),
         percentage: totalDuration > 0 ? parseFloat(((duration / totalDuration) * 100).toFixed(1)) : 0,
       };
     }).sort((a, b) => b.duration - a.duration);
@@ -122,14 +122,14 @@ export const useTimeBreakdown = (period = 'month') => {
         id,
         name: project?.name || 'Unknown Project',
         duration,
-        hours: parseFloat((duration / 3600).toFixed(2)),
+        hours: parseFloat((duration / 60).toFixed(2)),
         percentage: totalDuration > 0 ? parseFloat(((duration / totalDuration) * 100).toFixed(1)) : 0,
       };
     }).sort((a, b) => b.duration - a.duration);
 
     return {
       total: totalDuration,
-      totalHours: parseFloat((totalDuration / 3600).toFixed(2)),
+      totalHours: parseFloat((totalDuration / 60).toFixed(2)),
       courses: courseBreakdown,
       projects: projectBreakdown,
       byCategory: {

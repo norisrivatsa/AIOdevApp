@@ -121,6 +121,11 @@ const FocusBoard = () => {
     resumeTimer();
   };
 
+  useEffect(() => {
+  console.log('Timer state:', { isRunning, elapsedSeconds, activeSession });
+}, [isRunning, elapsedSeconds, activeSession]);
+
+
   return (
     <div className="h-full flex items-center justify-center overflow-hidden p-8 bg-gray-50 dark:bg-black">
       <div className="w-full max-w-2xl">
